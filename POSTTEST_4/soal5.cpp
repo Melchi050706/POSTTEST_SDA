@@ -7,47 +7,74 @@ struct Node {
     Node* prev;
 };
 
-void exchangeHeadAndTail(Node *&head_ref) {
-    if (head_ref == nullptr || head_ref->next == head_ref) return; // kosong/1 node
+// Fungsi bantu untuk menyisipkan di akhir (digunakan di main)
+void insertEnd(Node *&head_ref, int data) {
+    Node *newNode = new Node{data, nullptr, nullptr};
 
-    Node* head = head_ref;
-    Node* tail = head_ref->prev;
-    Node* headNext = head->next;
-    Node* tailPrev = tail->prev;
-
-    // Jika hanya 2 node
-    if (headNext == tail) {
-        head->next = head;
-        head->prev = tail;
-        tail->next = tail;
-        tail->prev = head;
-        head_ref = tail;
+    if (head_ref == nullptr) {
+        newNode->next = newNode;
+        newNode->prev = newNode;
+        head_ref = newNode;
         return;
     }
 
-    // Tukar koneksi head dan tail
-    tailPrev->next = head;
-    headNext->prev = tail;
+    Node *tail = head_ref->prev;
+    newNode->next = head_ref;
+    newNode->prev = tail;
+    head_ref->prev = newNode;
+    tail->next = newNode;
+}
 
-    tail->next = headNext;
-    tail->prev = head->prev;
+// Fungsi utama: menukar head dan tail dalam circular doubly linked list
+void exchangeHeadAndTail(Node *&head_ref) {
+    // Tidak perlu tukar jika list kosong atau hanya 1 node
+    if (head_ref == nullptr || head_ref->next == head_ref) {
+        return; 
+    }
 
-    head->next = head_ref;
-    head->prev = tailPrev;
+    Node* head = head_ref;
+    Node* tail = head->prev;        // Tail adalah node sebelum head (karena circular)
+    Node* head_next = head->next;   // Node setelah head
+    Node* tail_prev = tail->prev;   // Node sebelum tail
 
-    // Update koneksi antara head_ref->prev (tail lama) dan head baru
-    head_ref->prev = tail;
-    tail->next = head_ref;
+    // Kasus khusus: hanya ada 2 node (head <-> tail)
+    if (head_next == tail) {
+        // Cukup tukar peran: hubungkan tail ke head dan sebaliknya
+        tail->next = head;
+        tail->prev = head;
+        head->next = tail;
+        head->prev = tail;
+        head_ref = tail; // Update head menjadi tail lama
+        return;
+    }
 
-    // Jadikan tail sebagai head baru
+    // Kasus umum: 3 node atau lebih
+    // 1. Sambungkan node sebelum tail (tail_prev) ke head,
+    //    karena head akan menjadi tail baru
+    tail_prev->next = head;
+    head->prev = tail_prev;
+
+    // 2. Sambungkan tail ke node setelah head (head_next),
+    //    karena tail akan menjadi head baru
+    tail->next = head_next;
+    head_next->prev = tail;
+
+    // 3. Hubungkan head (sekarang di posisi akhir) dan tail (sekarang di posisi awal)
+    //    secara langsung untuk menutup lingkaran
+    head->next = tail;
+    tail->prev = head;
+
+    // 4. Update head_ref ke tail lama, karena sekarang jadi head
     head_ref = tail;
 }
 
+// Fungsi untuk mencetak list
 void printList(Node *head_ref) {
     if (head_ref == nullptr) {
         cout << "List kosong" << endl;
         return;
     }
+
     Node *current = head_ref;
     do {
         cout << current->data << " ";
@@ -56,35 +83,22 @@ void printList(Node *head_ref) {
     cout << endl;
 }
 
-void insertEnd(Node *&head_ref, int data) {
-    Node *newNode = new Node{data, nullptr, nullptr};
-    if (head_ref == nullptr) {
-        newNode->next = newNode;
-        newNode->prev = newNode;
-        head_ref = newNode;
-        return;
-    }
-    Node *tail = head_ref->prev;
-    newNode->next = head_ref;
-    newNode->prev = tail;
-    tail->next = newNode;
-    head_ref->prev = newNode;
-}
-
+// Program utama
 int main() {
     Node *head = nullptr;
+
     insertEnd(head, 1);
     insertEnd(head, 2);
     insertEnd(head, 3);
     insertEnd(head, 4);
     insertEnd(head, 5);
 
-    cout << "List sebelum exchange: ";
-    printList(head);
+    cout << "List sebelum ditukar: ";
+    printList(head); 
 
     exchangeHeadAndTail(head);
 
-    cout << "List setelah exchange head dan tail: ";
+    cout << "List setelah ditukar head dan tail: ";
     printList(head); // Output: 5 2 3 4 1
 
     return 0;
